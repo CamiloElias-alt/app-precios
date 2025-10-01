@@ -1,97 +1,105 @@
-// Referencias a elementos
-const form = document.getElementById("form-producto");
-const lista = document.getElementById("lista-productos");
-const buscador = document.getElementById("buscador");
-const totalEl = document.getElementById("total");
 
-// Cargar productos desde localStorage o iniciar vacío
-let productos = JSON.parse(localStorage.getItem("productos")) || [];
+document.addEventListener('DOMContentLoaded', () => {
+    // Firebase services
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-// Cargar usuario de sesión
-const usuario = JSON.parse(localStorage.getItem("usuario"));
-if (usuario) {
-  document.getElementById("usuario-logeado").textContent = "Bienvenido, " + usuario.nombre;
-} else {
-  // Si no hay sesión, volver al login
-  window.location.href = "index.html";
-}
+    // Elements from app-precios.html
+    const productList = document.getElementById('product-list');
+    const logoutButton = document.getElementById('logout-button');
+    const saveProductButton = document.getElementById('save-product-button');
+    const productForm = document.getElementById('product-form');
+    const productNameInput = document.getElementById('product-name');
+    const productPriceInput = document.getElementById('product-price');
+    const productProfitInput = document.getElementById('product-profit'); // Input para ganancia
 
-// ------------------ FUNCIONES ------------------ //
+    let productsCollection;
+    let currentUser;
 
-// Guardar productos en localStorage
-function guardarProductos() {
-  localStorage.setItem("productos", JSON.stringify(productos));
-}
-
-// Renderizar productos en la tabla
-function renderProductos(filtro = "") {
-  lista.innerHTML = "";
-  let totalGeneral = 0;
-
-  // Filtrar productos por búsqueda
-  productos
-    .filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
-    .forEach((p, index) => {
-      const precioVenta = p.precio + (p.precio * p.ganancia / 100);
-      totalGeneral += precioVenta;
-
-      // Crear fila de la tabla
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td>${p.nombre}</td>
-        <td>$${p.precio.toFixed(2)}</td>
-        <td>${p.ganancia}%</td>
-        <td>$${precioVenta.toFixed(2)}</td>
-        <td><button class="btn btn-danger btn-sm">🗑️ Eliminar</button></td>
-      `;
-
-      // Agregar evento al botón de eliminar
-      fila.querySelector("button").addEventListener("click", () => {
-        eliminarProducto(index);
-      });
-
-      lista.appendChild(fila);
+    // Auth state listener
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            productsCollection = db.collection('usuarios').doc(user.uid).collection('productos');
+            setupProductListener();
+        } else {
+            window.location.href = 'index.html';
+        }
     });
 
-  totalEl.textContent = "Total General: $" + totalGeneral.toFixed(2);
-}
+    // Real-time listener for products
+    function setupProductListener() {
+        productsCollection.orderBy('name').onSnapshot((snapshot) => {
+            productList.innerHTML = ''; // Clear the list
+            if (snapshot.empty) {
+                // El colspan es 5 ahora: Nombre, Precio Compra, Ganancia, Precio Venta, Acciones
+                productList.innerHTML = '<tr><td colspan="5">No has agregado productos todavía.</td></tr>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const product = { id: doc.id, ...doc.data() };
 
-// Eliminar producto
-function eliminarProducto(index) {
-  productos.splice(index, 1);
-  guardarProductos();
-  renderProductos(buscador.value);
-}
+                // Calcular el precio de venta
+                const sellingPrice = product.price + (product.price * product.profit / 100);
 
-// Cerrar sesión
-function cerrarSesion() {
-  localStorage.removeItem("usuario");
-  window.location.href = "index.html";
-}
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>$${Number(product.price).toFixed(2)}</td>
+                    <td>${product.profit}%</td>
+                    <td>$${sellingPrice.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm delete-button" data-id="${product.id}">Eliminar</button>
+                    </td>
+                `;
+                productList.appendChild(row);
+            });
+        }, (error) => {
+            console.error("Error fetching products: ", error);
+            alert("Error al cargar los productos.");
+        });
+    }
 
-// ------------------ EVENTOS ------------------ //
+    // Save new product
+    saveProductButton.addEventListener('click', () => {
+        const name = productNameInput.value.trim();
+        const price = parseFloat(productPriceInput.value);
+        const profit = parseFloat(productProfitInput.value);
 
-// Agregar producto
-form.addEventListener("submit", e => {
-  e.preventDefault();
-  const nombre = document.getElementById("nombre").value.trim();
-  const precio = parseFloat(document.getElementById("precio").value);
-  const ganancia = parseFloat(document.getElementById("ganancia").value);
+        if (name && !isNaN(price) && price > 0 && !isNaN(profit) && profit >= 0) {
+            // Guardar nombre, precio de compra y ganancia
+            productsCollection.add({ name, price, profit })
+                .then(() => {
+                    productForm.reset();
+                    $('#productModal').modal('hide'); // Hide modal on success
+                })
+                .catch((error) => {
+                    console.error("Error adding product: ", error);
+                    alert("Error al guardar el producto.");
+                });
+        } else {
+            alert('Por favor, completa todos los campos correctamente.');
+        }
+    });
 
-  if(nombre && precio > 0 && ganancia > 0) {
-    productos.push({ nombre, precio, ganancia });
-    guardarProductos();
-    form.reset();
-    renderProductos(); // Volver a renderizar toda la lista
-  }
+    // Handle product deletion
+    productList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-button')) {
+            const id = e.target.getAttribute('data-id');
+            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                productsCollection.doc(id).delete().catch((error) => {
+                    console.error("Error deleting product: ", error);
+                    alert('Error al eliminar el producto.');
+                });
+            }
+        }
+    });
+
+    // Logout button
+    logoutButton.addEventListener('click', () => {
+        auth.signOut().catch((error) => {
+            console.error('Logout error:', error); 
+            alert('Error al cerrar sesión.');
+        });
+    });
 });
-
-// Filtrar productos mientras se escribe
-buscador.addEventListener("input", e => {
-  renderProductos(e.target.value);
-});
-
-// ------------------ INICIALIZACIÓN ------------------ //
-
-// Renderizar productos al cargar la página
-renderProductos();
