@@ -1,0 +1,86 @@
+body { 
+  background-color: #f8f9fa; 
+  margin: 0;
+  padding: 0;
+}
+
+/* Tarjetas con bordes suaves */
+.card { 
+  border-radius: 15px; 
+}
+
+/* Texto total */
+#total { 
+  font-size: 1.2rem; 
+  font-weight: bold; 
+}
+
+/* Estilo login centrado */
+.seccion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.target {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* 📱 Adaptación a móviles */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  /* Formulario más compacto */
+  #form-producto .form-control {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  #form-producto .btn {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  /* Tabla en scroll horizontal */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  #total {
+    font-size: 1rem;
+  }
+}
+
+/* 📱 Extra pequeño (menos de 480px) */
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  #form-producto .row {
+    flex-direction: column;
+  }
+
+  #form-producto .col-md-4,
+  #form-producto .col-md-3,
+  #form-producto .col-md-2 {
+    width: 100%;
+  }
+
+  #form-producto .btn {
+    width: 100%;
+  }
+}
