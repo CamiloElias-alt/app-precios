@@ -1,38 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App de Precios</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/styles.css"> 
 </head>
 
 <body>
   <div class="container mt-5">
-    <h1>Lista de Productos</h1>
+    
+    <h1 class="text-center">Lista de Productos</h1>
+    <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
+    
     <div class="d-flex justify-content-end mb-3">
       <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#productModal">Agregar
         Producto</button>
       <button type="button" class="btn btn-danger ml-2" id="logout-button">Cerrar Sesión</button>
     </div>
+    
+    <div class="form-group mb-4">
+        <input type="text" class="form-control" id="search-input" placeholder="Buscar producto por nombre..." aria-label="Buscar producto">
+    </div>
+
     <table class="table">
       <thead>
         <tr>
           <th scope="col">Nombre</th>
-          <th scope="col">Precio Compra</th>
-          <th scope="col">Ganancia (%)</th>
-          <th scope="col">Precio Venta</th>
-          <th scope="col">Acciones</th>
+          <th scope="col" class="text-center">Precio Venta</th>
+          <th scope="col" class="text-center">Acciones</th>
         </tr>
       </thead>
       <tbody id="product-list">
-        <!-- Product rows will be inserted here -->
-      </tbody>
+        </tbody>
     </table>
   </div>
 
-  <!-- Modal -->
   <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
     aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -86,7 +91,7 @@
     };
     firebase.initializeApp(firebaseConfig);
   </script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app-min.js"></script>
 </body>
 
 </html>

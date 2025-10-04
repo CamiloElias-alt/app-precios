@@ -1,113 +1,226 @@
-body { 
-  background-color: #f8f9fa; 
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f2f5;
   margin: 0;
   padding: 0;
+  color: #333;
 }
 
-.form-container {
-  max-width: 400px;
-  padding: 15px;
-  margin: auto;
-}
-.form-container .form-control {
-  position: relative;
-  box-sizing: border-box;
-  height: auto;
-  padding: 10px;
-  font-size: 16px;
-}
-.form-container .form-control:focus {
-  z-index: 2;
-}
-.form-container input[type="email"] {
-  margin-bottom: -1px;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
-}
-.form-container input[type="password"] {
-  margin-bottom: 10px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+.container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-top: 30px;
+    margin-bottom: 30px;
 }
 
-
-/* Tarjetas con bordes suaves */
-.card { 
-  border-radius: 15px; 
+h1, h2 {
+    color: #007bff; 
+    font-weight: 600;
 }
 
-/* Texto total */
-#total { 
-  font-size: 1.2rem; 
-  font-weight: bold; 
+h2#welcome-message {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-bottom: 25px;
 }
 
-/* Estilo login centrado */
+/* ---------------------------------- */
+/* 🔐 Estilos de Autenticación (index.html) */
+/* ---------------------------------- */
 .seccion {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 15px;
 }
 
 .target {
   width: 100%;
   max-width: 400px;
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); 
 }
 
-/* 📱 Adaptación a móviles */
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;
-  }
+.form-container input {
+    border-radius: 8px !important;
+    margin-bottom: 15px;
+}
 
-  h2 {
-    font-size: 1.4rem;
-  }
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: background-color 0.3s;
+    border-radius: 8px; /* Aplicado aquí también */
+}
 
-  /* Formulario más compacto */
-  #form-producto .form-control {
-    font-size: 0.9rem;
-    padding: 8px;
-  }
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
 
-  #form-producto .btn {
-    font-size: 0.9rem;
-    padding: 8px;
-  }
 
-  /* Tabla en scroll horizontal */
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+/* ---------------------------------- */
+/* 📊 Tabla de Productos (app-precios.html) */
+/* ---------------------------------- */
 
-  table {
+.table {
+    border-radius: 8px;
+    overflow: hidden; 
+    border: 1px solid #dee2e6;
+}
+
+.table thead th {
+    background-color: #e9ecef;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 700;
+}
+
+.table tbody tr:hover {
+    background-color: #f5f5f5;
+    transition: background-color 0.2s;
+}
+
+/* Estilo para los botones de acción */
+.btn-sm {
+    border-radius: 6px;
     font-size: 0.85rem;
+    /* Ajuste para que se apilen mejor en móvil */
+    width: 100px; 
+    margin: 2px 0;
+}
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #333;
+}
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Botón de Agregar y Cerrar Sesión */
+.d-flex.justify-content-end.mb-3 .btn {
+    border-radius: 8px;
+}
+
+/* ---------------------------------- */
+/* 📱 Adaptación a Móviles (Responsive - Menos de 768px) */
+/* ---------------------------------- */
+
+@media (max-width: 768px) {
+  
+  .container {
+    padding: 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    box-shadow: none; 
   }
 
-  #total {
-    font-size: 1rem;
+  h1 {
+    font-size: 1.6rem;
+  }
+  
+  /* Botones principales: Agregar y Cerrar Sesión (Apilados) */
+  .d-flex.justify-content-end.mb-3 {
+    flex-direction: column;
+    align-items: stretch; 
+    margin-bottom: 20px !important;
+  }
+
+  .d-flex.justify-content-end.mb-3 button {
+    margin-left: 0 !important;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  /* Adaptación de la TABLA: Estilo Tarjeta */
+  .table {
+    border: none;
+  }
+
+  .table thead {
+    display: none; 
+  }
+
+  .table, .table tbody, .table tr, .table td {
+    display: block; 
+    width: 100%;
+  }
+
+  .table tr {
+    margin-bottom: 12px; 
+    border: 1px solid #e0e0e0;
+    border-radius: 8px; 
+    background-color: #fff;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); 
+  }
+
+  .table td {
+    border: none; 
+    position: relative;
+    padding-left: 40%; /* Reducido para mejor ajuste del contenido */
+    text-align: right;
+  }
+
+  /* Etiquetas de datos para móvil */
+  .table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    width: 35%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 600;
+    color: #007bff;
+  }
+  
+  /* Ajuste especial para los botones de acción (Ultima Celda) */
+  .table td:last-child {
+    text-align: center;
+    padding: 10px 10px 0 10px; /* Ajuste para centrar mejor y sin data-label */
+    display: flex;
+    flex-direction: column; /* Apila los botones de acción */
+    align-items: center;
+  }
+
+  /* El último data-label (Acciones) no es necesario y se oculta para no estorbar el centrado */
+  .table td:last-child::before {
+      display: none;
+  }
+  
+  /* Hacer que los botones de Editar/Eliminar se vean mejor apilados */
+  .table td:last-child .btn {
+      width: 80%; /* Los hace más anchos para ocupar el espacio */
+      margin: 4px 0; /* Agrega espacio vertical entre ellos */
   }
 }
 
-/* 📱 Extra pequeño (menos de 480px) */
-@media (max-width: 480px) {
-  h2 {
-    font-size: 1.2rem;
-  }
+.seccion {
+  display: flex;
+  align-items: center; /* Centrado vertical */
+  justify-content: center; /* Centrado horizontal */
+  min-height: 100vh;
+  padding: 15px;
+}
 
-  #form-producto .row {
-    flex-direction: column;
-  }
+.target {
+  width: 100%;
+  max-width: 400px;
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px; /* Esquinas redondeadas */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Sombra para efecto "flotante" */
+}
 
-  #form-producto .col-md-4,
-  #form-producto .col-md-3,
-  #form-producto .col-md-2 {
-    width: 100%;
-  }
-
-  #form-producto .btn {
-    width: 100%;
-  }
+.form-container input {
+    border-radius: 8px !important;
+    margin-bottom: 15px;
 }
