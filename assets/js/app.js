@@ -1,4 +1,3 @@
-
 (() => {
     'use strict';
 
@@ -24,126 +23,141 @@
         let currentUser;
         let allProducts = []; // Almacena todos los productos localmente
 
-        // Auth state listener
+        // -----------------------------------------------------
+        // 1. AUTENTICACIÓN Y CARGA INICIAL
+        // -----------------------------------------------------
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
                 
                 // 📌 Mostrar el mensaje de bienvenida con el nombre del usuario
-                if (user.displayName) {
-                    welcomeMessage.textContent = `¡Bienvenido, ${user.displayName}!`;
-                } else {
-                    welcomeMessage.textContent = `¡Bienvenido!`;
-                }
-
+                welcomeMessage.textContent = user.displayName ? `¡Bienvenido, ${user.displayName}!` : `¡Bienvenido!`;
+                
+                // Referencia a la colección de productos del usuario
                 productsCollection = db.collection('usuarios').doc(user.uid).collection('productos');
-                setupProductListener();
+                
+                loadProducts();
             } else {
-                window.location.href = 'index.html';
+                window.location.href = "index.html";
             }
         });
 
-        // 🔍 Listener principal de Firestore (GUARDA todos los productos)
-        function setupProductListener() {
-            // Usa onSnapshot para obtener actualizaciones en tiempo real
-            productsCollection.orderBy('name').onSnapshot((snapshot) => {
-                allProducts = []; // Limpiar la lista antes de llenarla
-                snapshot.forEach(doc => {
-                    allProducts.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Renderiza la lista con el filtro actual (vacío por defecto)
-                renderProductList(allProducts, searchInput.value.trim());
-            }, (error) => {
-                console.error("Error fetching products: ", error);
-                alert("Error al cargar los productos.");
-            });
-        }
-
-        // 🔍 Función de Renderizado que maneja el FILTRO y la creación del HTML
-        function renderProductList(products, searchTerm) {
-            productList.innerHTML = ''; 
-            
-            const lowerCaseSearch = searchTerm.toLowerCase();
-            
-            // Aplica el filtro por nombre
-            const filteredProducts = products.filter(product => 
-                product.name.toLowerCase().includes(lowerCaseSearch)
-            );
-
-            if (filteredProducts.length === 0) {
-                // El colspan se ajusta a las 3 columnas visibles
-                productList.innerHTML = `<tr class="text-center"><td colspan="3" class="text-center">No se encontraron productos con el nombre "${searchTerm}".</td></tr>`; 
-                return;
-            }
-            
-            filteredProducts.forEach(product => {
-                // Calcular el precio de venta (la lógica se mantiene)
-                const sellingPrice = product.price + (product.price * product.profit / 100);
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td data-label="Producto">${product.name}</td>
-                    <td class="text-center" data-label="Precio Venta">$${sellingPrice.toFixed(2)}</td>
-                    <td class="text-center" data-label="Acciones">
-                        <button class="btn btn-warning btn-sm edit-button" data-id="${product.id}">Editar</button>
-                        <button class="btn btn-danger btn-sm delete-button" data-id="${product.id}">Eliminar</button>
-                    </td>
-                `;
-                productList.appendChild(row);
+        function loadProducts() {
+            productsCollection.orderBy('name').onSnapshot(snapshot => {
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                filterProducts(); 
+            }, error => {
+                console.error("Error al cargar productos:", error);
+                alert("Error al cargar la lista de productos.");
             });
         }
         
-        // 🔍 Listener para el campo de búsqueda: filtra en tiempo real
-        searchInput.addEventListener('input', () => {
-            renderProductList(allProducts, searchInput.value.trim());
-        });
+        // -----------------------------------------------------
+        // 2. FILTRADO Y RENDERIZADO
+        // -----------------------------------------------------
+        
+        function filterProducts() {
+            const searchText = searchInput.value.toLowerCase();
 
-        // 📌 Guardar nuevo producto o editar existente
-        saveProductButton.addEventListener('click', () => {
+            const filteredProducts = allProducts.filter(product => {
+                // Asegurar que el campo 'name' exista antes de llamar toLowerCase()
+                return (product.name || '').toLowerCase().includes(searchText);
+            });
+
+            renderProductList(filteredProducts);
+        }
+
+        function renderProductList(products) {
+    productList.innerHTML = ''; // Limpiar la lista actual
+
+    if (products.length === 0) {
+        // Asumiendo que 'productList' es el <tbody> de la tabla
+        productList.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay productos registrados o no coinciden con la búsqueda.</td></tr>';
+        return;
+    }
+
+    products.forEach(product => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${product.name}</td>
+            <td class="text-center">$${(product.finalPrice || 0).toFixed(2)}</td> 
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-warning edit-button" data-id="${product.id}">Editar</button>
+                <button type="button" class="btn btn-sm btn-danger delete-button" data-id="${product.id}">Eliminar</button>
+            </td>
+        `;
+        productList.appendChild(tr);
+    });
+}
+        // -----------------------------------------------------
+        // 3. LISTENERS: Guardar/Editar Producto
+        // -----------------------------------------------------
+
+        saveProductButton.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            
+            // ✅ CLAVE: Asegurar la conversión de texto a número y usar 0 si está vacío.
             const name = productNameInput.value.trim();
-            const price = parseFloat(productPriceInput.value);
-            const profit = parseFloat(productProfitInput.value);
-            const editId = saveProductButton.getAttribute('data-edit-id'); 
+            const price = parseFloat(productPriceInput.value) || 0; 
+            const profit = parseFloat(productProfitInput.value) || 0;
 
-            if (name && !isNaN(price) && price > 0 && !isNaN(profit) && profit >= 0) {
-                if (editId) {
-                    // 🔄 Editar producto existente
-                    productsCollection.doc(editId).update({ name, price, profit })
-                        .then(() => {
-                            productForm.reset();
-                            saveProductButton.removeAttribute('data-edit-id');
-                            $('#productModal').modal('hide');
-                        })
-                        .catch((error) => {
-                            console.error("Error updating product: ", error);
-                            alert("Error al actualizar el producto.");
-                        });
-                } else {
-                    // ➕ Guardar nuevo producto
-                    productsCollection.add({ name, price, profit })
-                        .then(() => {
-                            productForm.reset();
-                            $('#productModal').modal('hide');
-                        })
-                        .catch((error) => {
-                            console.error("Error adding product: ", error);
-                            alert("Error al guardar el producto.");
-                        });
-                }
-            } else {
-                alert("Por favor, completa todos los campos correctamente.");
+            if (!name || price <= 0) {
+                alert("Por favor, rellena el nombre y un precio de costo válido (mayor a 0).");
+                return;
             }
+
+            const finalPrice = price * (1 + profit / 100);
+            
+            const productData = {
+                name: name,
+                price: price, // Guardado como número
+                profit: profit, // Guardado como número
+                finalPrice: finalPrice // Guardado como número
+            };
+
+            const editId = saveProductButton.getAttribute('data-edit-id');
+
+            let savePromise;
+
+            if (editId) {
+                // Modo Edición
+                savePromise = productsCollection.doc(editId).update(productData);
+            } else {
+                // Modo Guardar Nuevo
+                savePromise = productsCollection.add(productData);
+            }
+
+            savePromise
+                .then(() => {
+                    alert(`Producto "${name}" guardado exitosamente.`);
+                    $('#productModal').modal('hide');
+                    productForm.reset();
+                    saveProductButton.removeAttribute('data-edit-id'); // Limpiar ID de edición
+                })
+                .catch((error) => {
+                    console.error("Error al guardar el producto: ", error);
+                    alert("Error al guardar el producto. Intenta de nuevo.");
+                });
         });
 
-        // 📌 Eventos en la tabla (Editar y Eliminar)
+
+        // -----------------------------------------------------
+        // 4. LISTENERS: Eliminar y Editar
+        // -----------------------------------------------------
+
         productList.addEventListener('click', (e) => {
             // Eliminar
             if (e.target.classList.contains('delete-button')) {
                 const id = e.target.getAttribute('data-id');
-                if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-                    productsCollection.doc(id).delete().catch((error) => {
-                        console.error("Error deleting product: ", error);
+                const product = allProducts.find(p => p.id === id);
+
+                if (confirm(`¿Estás seguro de que deseas eliminar el producto: "${product.name}"?`)) {
+                    productsCollection.doc(id).delete().then(() => {
+                        // La lista se actualiza automáticamente con onSnapshot
+                        alert(`Producto "${product.name}" eliminado.`);
+                    }).catch(error => {
+                        console.error("Error al eliminar el producto: ", error);
                         alert('Error al eliminar el producto.');
                     });
                 }
@@ -152,27 +166,35 @@
             // Editar
             if (e.target.classList.contains('edit-button')) {
                 const id = e.target.getAttribute('data-id');
+                
+                // Usar la lista local para evitar otra llamada a Firebase
+                const product = allProducts.find(p => p.id === id);
 
-                productsCollection.doc(id).get().then(doc => {
-                    if (doc.exists) {
-                        const product = doc.data();
+                if (product) {
+                    // Rellenar el formulario con los datos
+                    productNameInput.value = product.name;
+                    // ✅ CLAVE: Usamos || 0 para evitar errores si la data vieja es nula/inválida
+                    productPriceInput.value = (product.price || 0).toFixed(2);
+                    productProfitInput.value = (product.profit || 0).toFixed(2);
 
-                        // Rellenar el formulario con los datos
-                        productNameInput.value = product.name;
-                        productPriceInput.value = product.price;
-                        productProfitInput.value = product.profit;
+                    // Guardar el id en el botón de guardar
+                    saveProductButton.setAttribute('data-edit-id', id);
 
-                        // Guardar el id en el botón de guardar
-                        saveProductButton.setAttribute('data-edit-id', id);
-
-                        // Mostrar el modal
-                        $('#productModal').modal('show');
-                    }
-                }).catch(error => {
-                    console.error("Error al obtener el producto: ", error);
+                    // Mostrar el modal
+                    $('#productModal').modal('show');
+                } else {
                     alert("No se pudo cargar el producto para editar.");
-                });
+                }
             }
+        });
+
+        // Listener para el buscador
+        searchInput.addEventListener('input', filterProducts);
+        
+        // Limpiar ID de edición al cerrar el modal
+        $('#productModal').on('hidden.bs.modal', function () {
+            productForm.reset();
+            saveProductButton.removeAttribute('data-edit-id');
         });
 
         // 📌 Logout button
