@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App de Precios - Ventas Diarias</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body>
+    
+    <div id="main-app" style="display: none;">
+        <div class="container mt-5">
+
+            <h1 class="text-center">Venta Diaria al Contado</h1>
+            <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
+
+            <div class="d-flex justify-content-end mb-3 flex-wrap">
+                <button type="button" class="btn btn-danger mr-2 mb-2" id="delete-old-sales-button">Borrar Ventas Antiguas</button>
+                <button type="button" class="btn btn-secondary mr-2 mb-2" onclick="window.location.href='app-precios.html'">Productos</button>
+                <button type="button" class="btn btn-info mr-2 mb-2" onclick="window.location.href='clientes.html'">Nueva Deuda</button>
+                <button type="button" class="btn btn-warning mr-2 mb-2" onclick="window.location.href='reportes.html'">Reportes</button>
+                <button type="button" class="btn btn-danger ml-2 mb-2" id="logout-button">Cerrar Sesión</button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    Añadir Productos a la Venta
+                </div>
+                <div class="card-body">
+                    <div class="form-row align-items-end">
+                        <div class="form-group col-md-7">
+                            <label for="product-search">Buscar Producto</label>
+                            <input type="text" class="form-control" id="product-search" list="product-options" placeholder="Escribe el nombre del producto">
+                            <datalist id="product-options"></datalist>
+                            <input type="hidden" id="selected-product-id">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="product-quantity">Cantidad</label>
+                            <input type="number" class="form-control" id="product-quantity" value="1" min="1">
+                        </div>
+                        <div class="form-group col-md-2">
+                            <button class="btn btn-primary btn-block" id="add-product-button">Añadir</button>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6>Productos en la Venta:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-right">Precio Venta</th>
+                                    <th class="text-right">Cantidad</th>
+                                    <th class="text-right">Subtotal</th>
+                                    <th class="text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-list">
+                                <tr><td colspan="5" class="text-center text-muted">Añade productos a la lista.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="total-final" class="font-weight-bold">TOTAL VENTA CONTADO:</label>
+                            <input type="text" readonly class="form-control-plaintext text-right font-weight-bold text-primary" id="total-final" value="$0.00" style="font-size: 1.8rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-right mt-3">
+                <button class="btn btn-lg btn-success" id="save-sale-button">Registrar Venta Contado</button>
+            </div>
+
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // Tu configuración de Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyBneMuP7ji8DQGbTw6h1cenR7FoCCuNzjE",
+          authDomain: "app-precios-eb164.firebaseapp.com",
+          projectId: "app-precios-eb164",
+          storageBucket: "app-precios-eb164.appspot.com",
+          messagingSenderId: "330278703118",
+          appId: "1:330278703118:web:b1d8e35824c0d180630b1b"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script src="assets/js/ventas.js"></script>
+
+</body>
+
+</html>

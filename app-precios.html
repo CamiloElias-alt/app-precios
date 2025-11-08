@@ -10,72 +10,88 @@
 </head>
 
 <body>
-  <div class="container mt-5">
-    
-    <h1 class="text-center">Lista de Productos</h1>
-    <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
-    
-    <div class="d-flex justify-content-end mb-3">
-  <button type="button" class="btn btn-info mr-2" onclick="window.location.href='clientes.html'">
-    Gestión de Clientes
-  </button>
   
-  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#productModal">Agregar
-    Producto</button>
-  <button type="button" class="btn btn-danger ml-2" id="logout-button">Cerrar Sesión</button>
-</div>
-    
-    <div class="form-group mb-4">
-        <input type="text" class="form-control" id="search-input" placeholder="Buscar producto por nombre..." aria-label="Buscar producto">
+  <div id="main-app" style="display: none;">
+    <div class="container mt-5">
+      
+      <h1 class="text-center">Lista de Productos</h1>
+      <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
+      
+      <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-warning mr-2" onclick="window.location.href='ventas.html'">
+          Ventas Diarias
+        </button>
+        <button type="button" class="btn btn-success mr-2" onclick="window.location.href='reportes.html'">
+          Reportes
+        </button>
+        <button type="button" class="btn btn-info mr-2" onclick="window.location.href='clientes.html'">
+          Gestión de Clientes (Deuda)
+        </button>
+        <button type="button" class="btn btn-danger ml-2" id="logout-button">Cerrar Sesión</button>
+      </div>
+
+      <div class="d-flex justify-content-between mb-3 align-items-center">
+        <input type="text" class="form-control w-50" id="search-input" placeholder="Buscar producto por nombre o código">
+        <button class="btn btn-primary ml-3" data-toggle="modal" data-target="#productModal">
+          <i class="fas fa-plus"></i> Nuevo Producto
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th class="text-right">Stock</th>
+              <th>Nombre</th>
+              <th class="text-right">Precio Venta</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="product-list">
+            <tr><td colspan="6" class="text-center text-muted">Cargando productos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      
     </div>
 
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Nombre</th>
-          <th scope="col" class="text-center">Precio Venta</th>
-          <th scope="col" class="text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="product-list">
-        </tbody>
-    </table>
-  </div>
-
-  <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="productModalLabel">Agregar Producto</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
+    <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="productModalLabel">Añadir/Editar Producto</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
           <form id="product-form">
-            <div class="form-group">
-              <label for="product-name">Nombre</label>
-              <input type="text" class="form-control" id="product-name" required>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="product-name">Nombre del Producto o Código (*)</label>
+                <input type="text" class="form-control" id="product-name" placeholder="Ej: Remera Polo, COD001" required>
+              </div>
+              <div class="form-group">
+                <label for="product-cost">Costo Unitario (*)</label>
+                <input type="number" step="0.01" class="form-control" id="product-cost" placeholder="Ej: 10.50" required>
+              </div>
+              <div class="form-group">
+                <label for="product-stock">Stock Actual</label>
+                <input type="number" class="form-control" id="product-stock" value="0" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="product-profit">Margen de Ganancia (%) (*)</label>
+                <input type="number" class="form-control" id="product-profit" placeholder="Ej: 25" required>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="product-price">Precio de Compra</label>
-              <input type="number" class="form-control" id="product-price" placeholder="Ej: 150.50" required>
-            </div>
-            <div class="form-group">
-              <label for="product-profit">Porcentaje de Ganancia (%)</label>
-              <input type="number" class="form-control" id="product-profit" placeholder="Ej: 25" required>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+              <button type="button" class="btn btn-primary" id="save-product-button">Guardar</button>
             </div>
           </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" id="save-product-button">Guardar</button>
         </div>
       </div>
     </div>
   </div>
-
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -88,14 +104,15 @@
       apiKey: "AIzaSyBneMuP7ji8DQGbTw6h1cenR7FoCCuNzjE",
       authDomain: "app-precios-eb164.firebaseapp.com",
       projectId: "app-precios-eb164",
-      storageBucket: "app-precios-eb164.firebasestorage.app",
-      messagingSenderId: "1005108069245",
-      appId: "1:1005108069245:web:1bbe089b9c77bb0dca4214",
-      measurementId: "G-SSVCRRFG33"
+      storageBucket: "app-precios-eb164.appspot.com",
+      messagingSenderId: "330278703118",
+      appId: "1:330278703118:web:b1d8e35824c0d180630b1b"
     };
     firebase.initializeApp(firebaseConfig);
   </script>
+
   <script src="assets/js/app.js"></script>
+
 </body>
 
 </html>

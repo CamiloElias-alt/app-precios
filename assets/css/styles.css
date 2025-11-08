@@ -165,8 +165,8 @@ h2#welcome-message {
   .table td {
     border: none; 
     position: relative;
-    padding-left: 40%; /* Reducido para mejor ajuste del contenido */
-    text-align: right;
+    /*padding-left: 40%;  Reducido para mejor ajuste del contenido */
+    text-align: center;
   }
 
   /* Etiquetas de datos para móvil */

@@ -2,43 +2,80 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializar Firebase Services
+        // Firebase services
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Elementos de la UI
+        // Obtener el contenedor principal
         const mainApp = document.getElementById('main-app'); 
+
+        // Elementos de la UI
         const welcomeMessage = document.getElementById('welcome-message');
         const logoutButton = document.getElementById('logout-button');
         
-        // ELEMENTOS DEL BUSCADOR DE PRODUCTOS
+        // ELEMENTOS DEL BUSCADOR
         const productSearchInput = document.getElementById('product-search');
         const productOptionsList = document.getElementById('product-options'); 
+        
         const productQuantityInput = document.getElementById('product-quantity');
         const addProductButton = document.getElementById('add-product-button');
         const orderList = document.getElementById('order-list');
         
-        // ELEMENTOS DE CRÉDITO Y VENTA
-        const clientNameInput = document.getElementById('client-name');
-        const totalSubtotalInput = document.getElementById('total-subtotal');
-        const interestRateInput = document.getElementById('interest-rate');
-        const totalInterestInput = document.getElementById('total-interest');
-        const monthlyInstallmentsInput = document.getElementById('monthly-installments');
-        const installmentAmountLabel = document.getElementById('installment-amount');
+        // ELEMENTOS DE VENTA
         const totalFinalInput = document.getElementById('total-final');
-        const saveDebtButton = document.getElementById('save-debt-button');
+        const saveSaleButton = document.getElementById('save-sale-button');
 
         let productsCollection;
-        let debtsCollection;
+        let salesCollection;
         let currentUser;
-        let allProducts = []; // Lista de todos los productos
-        let currentOrder = []; // Productos agregados a la deuda actual
+        let allProducts = []; 
+        let currentOrder = []; 
+        const deleteButton = document.getElementById('delete-old-sales-button');
+
+deleteButton.addEventListener('click', async () => {
+    if (!confirm("¿Está seguro de que desea eliminar TODAS las ventas anteriores a 30 días? ¡Esta acción no se puede deshacer!")) {
+        return;
+    }
+
+    try {
+        const thirtyDaysAgo = new Date();
+        // Establece la fecha límite a 30 días atrás
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const timestampLimit = firebase.firestore.Timestamp.fromDate(thirtyDaysAgo);
+
+        // 1. Consultar las ventas a eliminar
+        const snapshotToDelete = await salesCollection
+            .where('fechaVenta', '<', timestampLimit)
+            .get();
+
+        if (snapshotToDelete.empty) {
+            alert('✅ No se encontraron ventas para eliminar.');
+            return;
+        }
+
+        const batch = db.batch(); 
+        let deleteCount = 0;
+
+        snapshotToDelete.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            deleteCount++;
+        });
+
+        await batch.commit();
+
+        alert(`✅ Se han eliminado ${deleteCount} registros de ventas anteriores a ${thirtyDaysAgo.toLocaleDateString()}.`);
+        
+    } catch (error) {
+        console.error("Error al borrar ventas antiguas:", error);
+        alert("⚠️ Ocurrió un error al intentar borrar los registros.");
+    }
+});
 
         // 1. AUTENTICACIÓN Y CARGA INICIAL
 
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // Configuración de UI
                 if (mainApp) {
                     mainApp.style.display = 'block'; 
                 }
@@ -46,7 +83,7 @@
                 welcomeMessage.textContent = `Bienvenido, ${user.displayName || user.email}`;
                 
                 productsCollection = db.collection('usuarios').doc(currentUser.uid).collection('productos');
-                debtsCollection = db.collection('usuarios').doc(currentUser.uid).collection('deudas');
+                salesCollection = db.collection('usuarios').doc(currentUser.uid).collection('ventas');
 
                 loadProducts();
                 setupListeners();
@@ -74,6 +111,7 @@
                         
                         const option = document.createElement('option');
                         
+                        // Formato: Nombre del Producto 
                         option.value = `${product.name} [${formattedPrice}]`; 
                         option.setAttribute('data-id', product.id);
                         
@@ -89,7 +127,7 @@
         function renderOrderList() {
             orderList.innerHTML = '';
             if (currentOrder.length === 0) {
-                orderList.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Añade productos a la deuda.</td></tr>';
+                orderList.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Añade productos a la venta.</td></tr>';
                 return;
             }
 
@@ -109,35 +147,20 @@
         }
 
         function calculateTotals() {
-            let subtotal = currentOrder.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+            let total = currentOrder.reduce((sum, item) => sum + (item.subtotal || 0), 0);
             
-            subtotal = isNaN(subtotal) ? 0 : subtotal;
+            // Asegurar que total es un número válido
+            total = isNaN(total) ? 0 : total;
 
-            const ratePercent = parseFloat(interestRateInput.value) || 0;
-            const installments = parseInt(monthlyInstallmentsInput.value) || 1;
-            
-            const totalInterest = subtotal * (ratePercent / 100);
-            const totalFinal = subtotal + totalInterest;
-
-            const installmentAmount = installments > 0 ? totalFinal / installments : totalFinal;
-
-            totalSubtotalInput.value = formatCurrency(subtotal);
-            totalInterestInput.value = formatCurrency(totalInterest);
-            totalFinalInput.value = formatCurrency(totalFinal);
-            
-            installmentAmountLabel.textContent = formatCurrency(installmentAmount);
+            totalFinalInput.value = formatCurrency(total);
         }
 
         // 3. LISTENERS Y MANEJADORES DE EVENTOS
 
         function setupListeners() {
-            interestRateInput.addEventListener('input', calculateTotals);
-            monthlyInstallmentsInput.addEventListener('input', calculateTotals);
-            
-            // Botones de acción
             addProductButton.addEventListener('click', addProductToOrder);
             orderList.addEventListener('click', removeItemFromOrder);
-            saveDebtButton.addEventListener('click', saveDebt); 
+            saveSaleButton.addEventListener('click', saveSale); 
             
             logoutButton.addEventListener('click', () => {
                 auth.signOut().catch((error) => {
@@ -156,6 +179,7 @@
                 return;
             }
 
+            // Buscar la opción seleccionada por el valor
             const selectedOption = Array.from(productOptionsList.options).find(option => 
                 option.value === searchTerms
             );
@@ -173,16 +197,19 @@
                 return;
             }
 
+            // Validación de Stock
             if (quantity > (product.stock || 0)) {
                 alert(`Stock insuficiente. Solo quedan ${product.stock || 0} unidades de ${product.name}.`);
                 return;
             }
             
+            // Lógica para agregar o actualizar
             const existingItem = currentOrder.find(item => item.id === productId);
             
             const salePrice = product.precioVenta || (product.cost * (1 + ((product.profit || 0) / 100)));
 
             if (existingItem) {
+                 // Verificar stock acumulado antes de actualizar
                 if ((existingItem.quantity + quantity) > (product.stock || 0)) {
                      alert(`Stock insuficiente para añadir ${quantity} más.`);
                      return;
@@ -218,102 +245,86 @@
             }
         }
 
-        // 4. GUARDAR DEUDA
+        // 4. GUARDAR VENTA
 
-        function saveDebt() {
-            const clientName = clientNameInput.value.trim();
-            const totalFinal = parseFloat(totalFinalInput.value.replace('$', ''));
-            const totalSubtotal = parseFloat(totalSubtotalInput.value.replace('$', ''));
-            const totalInterest = parseFloat(totalInterestInput.value.replace('$', ''));
-            const installments = parseInt(monthlyInstallmentsInput.value) || 1;
-            const interestRate = parseFloat(interestRateInput.value) || 0;
-            
-            if (!clientName) {
-                alert('El nombre del cliente es obligatorio.');
-                return;
-            }
+        function saveSale() {
             if (currentOrder.length === 0) {
-                alert('Debes añadir al menos un producto a la deuda.');
+                alert('Debes añadir al menos un producto para registrar la venta.');
                 return;
             }
-            if (isNaN(totalFinal) || totalFinal <= 0) {
-                 alert('El monto total de la deuda debe ser mayor a $0.00.');
+            
+            const totalSaleAmount = parseFloat(totalFinalInput.value.replace('$', ''));
+            if (isNaN(totalSaleAmount) || totalSaleAmount <= 0) {
+                 alert('El monto total de la venta debe ser mayor a $0.00.');
                  return;
             }
 
-            saveDebtButton.disabled = true;
-            saveDebtButton.textContent = 'Guardando...';
+            // Deshabilitar botón para evitar doble envío
+            saveSaleButton.disabled = true;
+            saveSaleButton.textContent = 'Procesando...';
 
-            const batch = db.batch();
-            let totalCost = 0;
-
-            currentOrder.forEach(item => {
-                const productRef = productsCollection.doc(item.id);
+            db.runTransaction(transaction => {
+                let totalCost = 0;
                 
-                // Actualizar stock
-                batch.update(productRef, {
-                    stock: firebase.firestore.FieldValue.increment(-item.quantity)
+                const stockPromises = currentOrder.map(item => {
+                    const productRef = productsCollection.doc(item.id);
+                    return transaction.get(productRef).then(doc => {
+                        if (!doc.exists) {
+                            throw new Error(`El producto ${item.name} no existe en el inventario.`);
+                        }
+                        const currentStock = doc.data().stock || 0;
+                        if (currentStock < item.quantity) {
+                            throw new Error(`Stock insuficiente para ${item.name}. Solo quedan ${currentStock}.`);
+                        }
+                        totalCost += item.cost * item.quantity;
+                        
+                        transaction.update(productRef, {
+                            stock: currentStock - item.quantity
+                        });
+                    });
                 });
                 
-                totalCost += item.cost * item.quantity;
+                return Promise.all(stockPromises).then(() => {
+                    const totalProfit = totalSaleAmount - totalCost; 
+
+                    const saleData = {
+                        productos: currentOrder, 
+                        fechaVenta: firebase.firestore.FieldValue.serverTimestamp(),
+                        totalVenta: totalSaleAmount,
+                        costoTotal: totalCost,
+                        gananciaNeta: totalProfit,
+                        tipoVenta: 'CONTADO',
+                        vendedorUid: currentUser.uid
+                    };
+                    
+                    const newSaleRef = salesCollection.doc();
+                    transaction.set(newSaleRef, saleData);
+                });
+
+            })
+            .then(() => {
+                alert('Venta registrada y stock actualizado exitosamente!');
+                resetForm();
+                loadProducts(); 
+            })
+            .catch((error) => {
+                console.error("Error en la transacción de venta:", error);
+                const errorMessage = error.message.includes('Stock insuficiente') ? error.message : `Error desconocido. Mensaje: ${error.message}`;
+                alert(`⚠️ ¡ERROR AL REGISTRAR VENTA! ${errorMessage}. La operación fue revertida.`); 
+            })
+            .finally(() => {
+                saveSaleButton.disabled = false;
+                saveSaleButton.textContent = 'Registrar Venta Contado';
             });
-            
-            const totalProfit = totalSubtotal - totalCost; // Ganancia sin incluir intereses
-
-            // 2. Crear el documento de la Deuda
-            const debtData = {
-                cliente: clientName,
-                productos: currentOrder, 
-                fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-                totalSubtotal: totalSubtotal,
-                totalInteres: totalInterest,
-                totalFinal: totalFinal,
-                costoTotal: totalCost,
-                gananciaNeta: totalProfit, 
-                
-                // Campos de Crédito
-                tasaInteres: interestRate,
-                cuotas: installments,
-                montoPagado: 0,
-                saldoPendiente: totalFinal,
-                estado: 'PENDIENTE', 
-                
-                // Historial de pagos
-                paymentHistory: [],
-                
-                vendedorUid: currentUser.uid 
-            };
-            
-            const debtRef = debtsCollection.doc();
-            batch.set(debtRef, debtData);
-
-            batch.commit()
-                .then(() => {
-                    alert('Deuda registrada y stock actualizado exitosamente!');
-                    resetForm();
-                })
-                .catch((error) => {
-                    console.error("Error en la transacción batch de guardar deuda y stock:", error);
-                    alert(`Error al guardar la deuda o actualizar stock: ${error.message}. Intenta de nuevo.`);
-                })
-                .finally(() => {
-                    saveDebtButton.disabled = false;
-                    saveDebtButton.textContent = 'Guardar Deuda';
-                    loadProducts(); 
-                });
         }
 
-        // 5. UTILIDADES
+        // 5. UTILIDAD Y FORMATO
 
         function resetForm() {
-            clientNameInput.value = '';
-            interestRateInput.value = '0';
-            monthlyInstallmentsInput.value = '1';
-            
             productSearchInput.value = '';
-            productQuantityInput.value = '1'; 
+            productQuantityInput.value = '1';
             
-            currentOrder = [];
+            currentOrder = []; 
             renderOrderList();
             calculateTotals(); 
         }

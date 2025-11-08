@@ -10,123 +10,118 @@
 </head>
 
 <body>
-  <div class="container mt-5">
+  
+  <div id="main-app" style="display: none;">
+    <div class="container mt-5">
 
-    <h1 class="text-center">Crear Nueva Deuda de Cliente</h1>
-    <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
+      <h1 class="text-center">Crear Nueva Deuda de Cliente</h1>
+      <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
 
-    <div class="d-flex justify-content-end mb-3">
-      <button type="button" class="btn btn-secondary mr-2" onclick="window.location.href='app-precios.html'">Volver a Productos</button>
-      <button type="button" class="btn btn-info" onclick="window.location.href='deudas-pendientes.html'">Ver Deudas Guardadas</button>
-      <button type="button" class="btn btn-danger ml-2" id="logout-button">Cerrar Sesión</button>
-    </div>
-
-    <div class="card mb-4">
-      <div class="card-body">
-        
-        <div class="form-group">
-            <label for="client-name">Nombre del Cliente</label>
-            <input type="text" class="form-control" id="client-name" placeholder="Ej: Juan Pérez" required>
-        </div>
-
-        <h4 class="mb-3">Productos a Añadir</h4>
-            <div class="form-row align-items-end mb-4">
-    <div class="form-group col-md-8">
-        <label for="product-search">Producto</label>
-        <input list="product-options" class="form-control" id="product-search" placeholder="Escribe para buscar un producto" required>
-        
-        <datalist id="product-options">
-            </datalist>
-        
-        <input type="hidden" id="selected-product-id"> 
-    </div>
-    <div class="form-group col-md-2">
-        <label for="product-quantity">Cantidad</label>
-        <input type="number" class="form-control text-right" id="product-quantity" value="1" min="1" required>
-    </div>
-    <div class="form-group col-md-2">
-        <button type="button" class="btn btn-success btn-block" id="add-product-button">Añadir</button>
-    </div>
-</div>
-
-        <h4 class="mb-3">Orden Actual</h4>
-        <div class="table-responsive mb-4">
-          <table class="table table-sm table-striped">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th class="text-right">Cant.</th>
-                <th class="text-right">Precio U.</th>
-                <th class="text-right">Subtotal</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="order-list">
-              <tr><td colspan="5" class="text-center text-muted">Aún no hay productos en la orden.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
+      <div class="d-flex justify-content-end mb-3 flex-wrap">
+        <button type="button" class="btn btn-secondary mr-2 mb-2" onclick="window.location.href='app-precios.html'">Productos</button>
+        <button type="button" class="btn btn-info mr-2 mb-2" onclick="window.location.href='ventas.html'">Ventas Contado</button>
+        <button type="button" class="btn btn-warning mr-2 mb-2" onclick="window.location.href='reportes.html'">Reportes</button>
+        <button type="button" class="btn btn-success mb-2" onclick="window.location.href='deudas-pendientes.html'">Ver Deudas Guardadas</button>
+        <button type="button" class="btn btn-danger ml-2 mb-2" id="logout-button">Cerrar Sesión</button>
       </div>
+
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            Datos del Cliente y Venta a Crédito
+        </div>
+        <div class="card-body">
+            
+            <div class="form-group">
+                <label for="client-name">Nombre del Cliente (*)</label>
+                <input type="text" class="form-control" id="client-name" placeholder="Ej: Juan Pérez" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="interest-rate">Tasa de Interés Anual (Opcional - %)</label>
+                    <input type="number" class="form-control" id="interest-rate" value="0" min="0" step="0.01">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="monthly-installments">Cuotas (Meses)</label>
+                    <input type="number" class="form-control" id="monthly-installments" value="1" min="1">
+                </div>
+                <div class="form-group col-md-4">
+                    <label>Monto por Cuota:</label>
+                    <p class="form-control-static font-weight-bold text-success" id="installment-amount">$0.00</p>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <div class="card mb-4">
-      <div class="card-body">
-        <h4 class="mb-3">Resumen de Cuenta</h4>
-
-        <div class="form-row form-group">
-          <label class="col-sm-6 col-form-label">Subtotal de Productos</label>
-          <div class="col-sm-6">
-            <input type="text" readonly class="form-control-plaintext text-right" id="total-subtotal" value="$0.00">
-          </div>
+        <div class="card-header bg-secondary text-white">
+            Añadir Productos a la Deuda
         </div>
-        
-        <div class="row form-group align-items-center">
-            <label for="monthly-installments" class="col-sm-6 col-form-label">Número de Cuotas</label>
-            <div class="col-sm-6">
-                <input type="number" class="form-control text-right" id="monthly-installments" value="1" min="1">
+        <div class="card-body">
+            <div class="form-row align-items-end">
+                <div class="form-group col-md-7">
+                    <label for="product-search">Buscar Producto</label>
+                    <input type="text" class="form-control" id="product-search" list="product-options" placeholder="Escribe el nombre del producto">
+                    <datalist id="product-options"></datalist>
+                    <input type="hidden" id="selected-product-id"> 
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="product-quantity">Cantidad</label>
+                    <input type="number" class="form-control" id="product-quantity" value="1" min="1">
+                </div>
+                <div class="form-group col-md-2">
+                    <button class="btn btn-info btn-block" id="add-product-button">Añadir</button>
+                </div>
+            </div>
+            
+            <hr>
+
+            <h6>Productos en la Deuda:</h6>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-right">Precio Venta</th>
+                            <th class="text-right">Cantidad</th>
+                            <th class="text-right">Subtotal</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-list">
+                        <tr><td colspan="5" class="text-center text-muted">Añade productos a la lista.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-
-        <div class="form-row form-group">
-          <label class="col-sm-6 col-form-label text-success">Monto por Cuota</label>
-          <div class="col-sm-6">
-            <input type="text" readonly class="form-control-plaintext text-right text-success" id="installment-amount" value="$0.00">
-          </div>
-        </div>
-        <hr>
-
-        <div class="form-row form-group">
-          <label for="interest-rate" class="col-sm-6 col-form-label">Interés Mensual</label>
-          <div class="col-sm-6">
-            <input type="number" class="form-control text-right" id="interest-rate" value="0" min="0">
-          </div>
-        </div>
-
-        <div class="form-row form-group">
-          <label class="col-sm-6 col-form-label text-muted">Monto de Interés</label>
-          <div class="col-sm-6">
-            <input type="text" readonly class="form-control-plaintext text-right text-muted" id="total-interest" value="$0.00">
-          </div>
-        </div>
-
-        <hr>
-
-        <div class="form-row form-group">
-          <label class="col-sm-6 col-form-label font-weight-bold">TOTAL FINAL A DEUDA</label>
-          <div class="col-sm-6">
-            <input type="text" readonly class="form-control-plaintext text-right font-weight-bold text-primary" id="total-final" value="$0.00" style="font-size: 1.5rem;">
-          </div>
-        </div>
-        
-        <div class="text-right mt-3">
-          <button class="btn btn-lg btn-primary" id="save-debt-button">Guardar Deuda</button>
-        </div>
-
-      </div>
     </div>
-  </div>
 
+    <div class="card">
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="total-subtotal" class="font-weight-bold">Subtotal (Precio Venta)</label>
+                    <input type="text" readonly class="form-control-plaintext text-right font-weight-bold" id="total-subtotal" value="$0.00">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="total-interest" class="font-weight-bold text-danger">Total Interés (Costo Crédito)</label>
+                    <input type="text" readonly class="form-control-plaintext text-right font-weight-bold text-danger" id="total-interest" value="$0.00">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="total-final" class="font-weight-bold">TOTAL FINAL DEUDA:</label>
+                    <input type="text" readonly class="form-control-plaintext text-right font-weight-bold text-primary" id="total-final" value="$0.00" style="font-size: 1.5rem;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-right mt-3">
+        <button class="btn btn-lg btn-primary" id="save-debt-button">Guardar Deuda</button>
+    </div>
+
+    </div>
+  </div> 
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -140,13 +135,15 @@
       apiKey: "AIzaSyBneMuP7ji8DQGbTw6h1cenR7FoCCuNzjE",
       authDomain: "app-precios-eb164.firebaseapp.com",
       projectId: "app-precios-eb164",
-      storageBucket: "app-precios-eb164.firebasestorage.app",
-      messagingSenderId: "1005108069245",
-      appId: "1:1005108069245:web:1bbe089b9c77bb0dca4214",
-      measurementId: "G-SSVCRRFG33"
+      storageBucket: "app-precios-eb164.appspot.com",
+      messagingSenderId: "330278703118",
+      appId: "1:330278703118:web:b1d8e35824c0d180630b1b"
     };
     firebase.initializeApp(firebaseConfig);
   </script>
+
   <script src="assets/js/clientes.js"></script>
+
 </body>
+
 </html>

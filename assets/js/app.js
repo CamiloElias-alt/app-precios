@@ -2,202 +2,187 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Firebase services
+        // Inicializar Firebase Services
         const auth = firebase.auth();
         const db = firebase.firestore();
+        
+        // Obtener el contenedor principal 
+        const mainApp = document.getElementById('main-app'); 
 
-        // Elements from app-precios.html
+        // Elementos de la UI
         const productList = document.getElementById('product-list');
         const logoutButton = document.getElementById('logout-button');
         const saveProductButton = document.getElementById('save-product-button');
         const productForm = document.getElementById('product-form');
         const productNameInput = document.getElementById('product-name');
-        const productPriceInput = document.getElementById('product-price');
-        const productProfitInput = document.getElementById('product-profit');
-        
-        // Elementos MODIFICADOS/NUEVOS
-        const welcomeMessage = document.getElementById('welcome-message'); // Elemento de bienvenida
-        const searchInput = document.getElementById('search-input'); // Elemento del buscador
+        const productCostInput = document.getElementById('product-cost');
+        const productStockInput = document.getElementById('product-stock');
+        const productProfitInput = document.getElementById('product-profit'); 
+        const welcomeMessage = document.getElementById('welcome-message'); 
+        const searchInput = document.getElementById('search-input'); 
 
         let productsCollection;
         let currentUser;
-        let allProducts = []; // Almacena todos los productos localmente
+        let allProducts = [];
 
-        // -----------------------------------------------------
-        // 1. AUTENTICACIÓN Y CARGA INICIAL
-        // -----------------------------------------------------
+        // 1. AUTENTICACIÓN Y CARGA INICIAL (CORRECCIÓN DE SINCRONIZACIÓN)
 
         auth.onAuthStateChanged((user) => {
             if (user) {
+                // Si el usuario está logueado, mostrar el contenido
+                if (mainApp) {
+                    mainApp.style.display = 'block'; 
+                }
+                
                 currentUser = user;
+                welcomeMessage.textContent = `Bienvenido, ${user.displayName || user.email}`;
                 
-                // 📌 Mostrar el mensaje de bienvenida con el nombre del usuario
-                welcomeMessage.textContent = user.displayName ? `¡Bienvenido, ${user.displayName}!` : `¡Bienvenido!`;
+                // IMPORTANTE: Asegúrate de que la colección es 'usuarios' o 'users' según tu configuración
+                productsCollection = db.collection('usuarios').doc(currentUser.uid).collection('productos');
                 
-                // Referencia a la colección de productos del usuario
-                productsCollection = db.collection('usuarios').doc(user.uid).collection('productos');
-                
-                loadProducts();
+                // Iniciar la carga de productos y el listener de Firestore
+                setupProductsListener();
             } else {
-                window.location.href = "index.html";
+                // No hay usuario: Redirige al login
+                window.location.href = "index.html"; 
             }
         });
 
-        function loadProducts() {
-            productsCollection.orderBy('name').onSnapshot(snapshot => {
+        // 2. LÓGICA DE LA APLICACIÓN
+
+        function setupProductsListener() {
+            productsCollection.onSnapshot(snapshot => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                filterProducts(); 
+                renderProducts(allProducts);
             }, error => {
-                console.error("Error al cargar productos:", error);
-                alert("Error al cargar la lista de productos.");
+                console.error("Error al escuchar productos: ", error);
             });
         }
         
-        // -----------------------------------------------------
-        // 2. FILTRADO Y RENDERIZADO
-        // -----------------------------------------------------
-        
-        function filterProducts() {
-            const searchText = searchInput.value.toLowerCase();
-
-            const filteredProducts = allProducts.filter(product => {
-                // Asegurar que el campo 'name' exista antes de llamar toLowerCase()
-                return (product.name || '').toLowerCase().includes(searchText);
-            });
-
-            renderProductList(filteredProducts);
-        }
-
-        function renderProductList(products) {
-    productList.innerHTML = ''; // Limpiar la lista actual
-
-    if (products.length === 0) {
-        // Asumiendo que 'productList' es el <tbody> de la tabla
-        productList.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay productos registrados o no coinciden con la búsqueda.</td></tr>';
-        return;
-    }
-
-    products.forEach(product => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${product.name}</td>
-            <td class="text-center">$${(product.finalPrice || 0).toFixed(2)}</td> 
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-warning edit-button" data-id="${product.id}">Editar</button>
-                <button type="button" class="btn btn-sm btn-danger delete-button" data-id="${product.id}">Eliminar</button>
-            </td>
-        `;
-        productList.appendChild(tr);
-    });
-}
-        // -----------------------------------------------------
-        // 3. LISTENERS: Guardar/Editar Producto
-        // -----------------------------------------------------
-
-        saveProductButton.addEventListener('click', (e) => {
-            e.preventDefault(); 
-            
-            // ✅ CLAVE: Asegurar la conversión de texto a número y usar 0 si está vacío.
-            const name = productNameInput.value.trim();
-            const price = parseFloat(productPriceInput.value) || 0; 
-            const profit = parseFloat(productProfitInput.value) || 0;
-
-            if (!name || price <= 0) {
-                alert("Por favor, rellena el nombre y un precio de costo válido (mayor a 0).");
+        function renderProducts(products) {
+            productList.innerHTML = '';
+            if (products.length === 0) {
+                productList.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay productos registrados.</td></tr>';
                 return;
             }
 
-            const finalPrice = price * (1 + profit / 100);
-            
-            const productData = {
-                name: name,
-                price: price, // Guardado como número
-                profit: profit, // Guardado como número
-                finalPrice: finalPrice // Guardado como número
-            };
+            products.forEach(product => {
+                //Usar 0 como valor predeterminado si el campo no existe o es inválido.
+                const cost = parseFloat(product.cost) || 0;
+                const profit = parseFloat(product.profit) || 0;
+                
+                //Cálculo del precio de venta seguro
+                const price = cost * (1 + profit / 100); 
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-label="Stock" class="text-right">${product.stock || 0}</td>
+                    <td data-label="Nombre/Código">${product.name}</td>
+                    <td data-label="Precio Venta" class="text-right font-weight-bold text-primary">$${price.toFixed(2)}</td>
+                    <td data-label="Acciones" class="text-center">
+                        <button class="btn btn-sm btn-info edit-product-button" data-id="${product.id}" data-toggle="modal" data-target="#productModal">Editar</button>
+                        <button class="btn btn-sm btn-danger delete-product-button" data-id="${product.id}">Eliminar</button>
+                    </td>
+                `;
+                productList.appendChild(tr);
+            });
+        }
 
+        function filterProducts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredProducts = allProducts.filter(product => 
+                product.name.toLowerCase().includes(searchTerm)
+            );
+            renderProducts(filteredProducts);
+        }
+
+        // 3. EVENT LISTENERS
+
+        saveProductButton.addEventListener('click', () => {
+            const name = productNameInput.value.trim();
+            const cost = parseFloat(productCostInput.value);
+            const stock = parseInt(productStockInput.value);
+            const profit = parseFloat(productProfitInput.value);
             const editId = saveProductButton.getAttribute('data-edit-id');
 
-            let savePromise;
-
-            if (editId) {
-                // Modo Edición
-                savePromise = productsCollection.doc(editId).update(productData);
-            } else {
-                // Modo Guardar Nuevo
-                savePromise = productsCollection.add(productData);
+            if (!name || isNaN(cost) || isNaN(profit)) {
+                alert('Por favor, completa todos los campos obligatorios (Nombre, Costo, Ganancia %).');
+                return;
             }
+            
+            //Asegurar que stock sea un número válido, si no, usa 0
+            const safeStock = isNaN(stock) ? 0 : stock;
+
+            const productData = {
+                name: name,
+                cost: cost,
+                stock: safeStock, 
+                profit: profit,
+                // Calcular y guardar el precio de venta final
+                precioVenta: cost * (1 + profit / 100), 
+            };
+
+            const savePromise = editId 
+                ? productsCollection.doc(editId).update(productData) 
+                : productsCollection.add(productData); 
 
             savePromise
                 .then(() => {
-                    alert(`Producto "${name}" guardado exitosamente.`);
-                    $('#productModal').modal('hide');
-                    productForm.reset();
-                    saveProductButton.removeAttribute('data-edit-id'); // Limpiar ID de edición
+                    alert(`Producto ${editId ? 'actualizado' : 'guardado'} exitosamente!`);
+                    $('#productModal').modal('hide'); 
                 })
-                .catch((error) => {
+                .catch(error => {
                     console.error("Error al guardar el producto: ", error);
-                    alert("Error al guardar el producto. Intenta de nuevo.");
+                    alert(`Error al guardar: ${error.message}`);
                 });
         });
 
-
-        // -----------------------------------------------------
-        // 4. LISTENERS: Eliminar y Editar
-        // -----------------------------------------------------
-
+        // Cargar datos en el modal para editar y Eliminar producto
         productList.addEventListener('click', (e) => {
-            // Eliminar
-            if (e.target.classList.contains('delete-button')) {
-                const id = e.target.getAttribute('data-id');
-                const product = allProducts.find(p => p.id === id);
+            const target = e.target;
+            const id = target.getAttribute('data-id');
 
-                if (confirm(`¿Estás seguro de que deseas eliminar el producto: "${product.name}"?`)) {
-                    productsCollection.doc(id).delete().then(() => {
-                        // La lista se actualiza automáticamente con onSnapshot
-                        alert(`Producto "${product.name}" eliminado.`);
-                    }).catch(error => {
-                        console.error("Error al eliminar el producto: ", error);
-                        alert('Error al eliminar el producto.');
-                    });
-                }
-            }
-
-            // Editar
-            if (e.target.classList.contains('edit-button')) {
-                const id = e.target.getAttribute('data-id');
-                
-                // Usar la lista local para evitar otra llamada a Firebase
+            if (target.classList.contains('edit-product-button')) {
                 const product = allProducts.find(p => p.id === id);
 
                 if (product) {
-                    // Rellenar el formulario con los datos
+                    // Asegurar que se carguen valores numéricos para evitar errores de tipo en los inputs
                     productNameInput.value = product.name;
-                    // ✅ CLAVE: Usamos || 0 para evitar errores si la data vieja es nula/inválida
-                    productPriceInput.value = (product.price || 0).toFixed(2);
-                    productProfitInput.value = (product.profit || 0).toFixed(2);
-
-                    // Guardar el id en el botón de guardar
+                    productCostInput.value = product.cost || 0;
+                    productStockInput.value = product.stock || 0;
+                    productProfitInput.value = product.profit || 0;
+                    
                     saveProductButton.setAttribute('data-edit-id', id);
-
-                    // Mostrar el modal
-                    $('#productModal').modal('show');
-                } else {
-                    alert("No se pudo cargar el producto para editar.");
+                    $('#productModalLabel').text('Editar Producto');
+                    // El modal se abre por el data-target en el HTML
+                }
+            } else if (target.classList.contains('delete-product-button')) {
+                if (confirm("⚠️ ADVERTENCIA: Esta acción es irreversible. ¿Estás seguro de que deseas ELIMINAR este producto?")) {
+                    productsCollection.doc(id).delete()
+                        .then(() => {
+                            alert('Producto eliminado exitosamente.');
+                        })
+                        .catch(error => {
+                            console.error("Error al eliminar el producto: ", error);
+                            alert(`Error al eliminar: ${error.message}. Verifica tus reglas de seguridad.`);
+                        });
                 }
             }
         });
 
+        // 4. UTILIDAD Y EVENTOS
         // Listener para el buscador
+
         searchInput.addEventListener('input', filterProducts);
         
         // Limpiar ID de edición al cerrar el modal
         $('#productModal').on('hidden.bs.modal', function () {
             productForm.reset();
             saveProductButton.removeAttribute('data-edit-id');
+            $('#productModalLabel').text('Añadir/Editar Producto'); 
         });
 
-        // 📌 Logout button
+        // Logout button
         logoutButton.addEventListener('click', () => {
             auth.signOut().catch((error) => {
                 console.error('Logout error:', error);

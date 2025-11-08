@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App de Precios - Reportes</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body>
+    
+    <div id="main-app" style="display: none;">
+        <div class="container mt-5">
+
+            <h1 class="text-center">Reportes y Ganancias</h1>
+            <h2 class="text-center mb-4" id="welcome-message" style="font-size: 1.5rem; color: #6c757d;"></h2>
+
+            <div class="d-flex justify-content-end mb-4 flex-wrap">
+                <button type="button" class="btn btn-secondary mr-2 mb-2" onclick="window.location.href='app-precios.html'">Productos</button>
+                <button type="button" class="btn btn-info mr-2 mb-2" onclick="window.location.href='ventas.html'">Ventas Contado</button>
+                <button type="button" class="btn btn-primary mr-2 mb-2" onclick="window.location.href='deudas-pendientes.html'">Deudas Pendientes</button>
+                <button type="button" class="btn btn-danger ml-2 mb-2" id="logout-button">Cerrar Sesión</button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    Filtros de Reporte
+                </div>
+                <div class="card-body">
+                    <form id="report-form">
+                        <div class="form-row">
+                            <div class="form-group col-md-5">
+                                <label for="start-date-input">Fecha Inicial</label>
+                                <input type="date" class="form-control" id="start-date-input" required>
+                            </div>
+                            <div class="form-group col-md-5">
+                                <label for="end-date-input">Fecha Final</label>
+                                <input type="date" class="form-control" id="end-date-input" required>
+                            </div>
+                            <div class="form-group col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-warning btn-block" id="generate-report-button">Generar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    Resumen del Período <span id="transaction-count" class="badge badge-light badge-pill ml-2">0 Transacciones</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-row text-center">
+                        <div class="form-group col-md-4">
+                            <label for="total-sales-display" class="font-weight-bold">TOTAL VENTAS</label>
+                            <input type="text" readonly class="form-control-plaintext text-center font-weight-bold text-primary" id="total-sales-display" value="$0.00" style="font-size: 1.5rem;">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="total-cost-display" class="font-weight-bold">TOTAL COSTO</label>
+                            <input type="text" readonly class="form-control-plaintext text-center font-weight-bold text-danger" id="total-cost-display" value="$0.00" style="font-size: 1.5rem;">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="total-profit-display" class="font-weight-bold">GANANCIA NETA</label>
+                            <input type="text" readonly class="form-control-plaintext text-center font-weight-bold text-success" id="total-profit-display" value="$0.00" style="font-size: 1.8rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    Detalle de Transacciones
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Detalle</th>
+                                <th class="text-right">Total Venta</th>
+                                <th class="text-right">Ganancia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-list">
+                            <tr><td colspan="5" class="text-center text-muted">Use los filtros para generar un reporte.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // Tu configuración de Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyBneMuP7ji8DQGbTw6h1cenR7FoCCuNzjE",
+          authDomain: "app-precios-eb164.firebaseapp.com",
+          projectId: "app-precios-eb164",
+          storageBucket: "app-precios-eb164.appspot.com",
+          messagingSenderId: "330278703118",
+          appId: "1:330278703118:web:b1d8e35824c0d180630b1b"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script src="assets/js/reportes.js"></script>
+
+</body>
+
+</html>
